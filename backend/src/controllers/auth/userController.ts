@@ -5,6 +5,10 @@ import getErrorsInArray from "../../utils/joiError";
 import { joiOptions } from "../../utils/joiOptions";
 import User from "../../models/auth/userModel";
 import { generateAccessToken } from "../../utils/token";
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 
 interface AuthRequest extends Request {
@@ -253,6 +257,48 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
             message: "User details fetched successfully",
             result: updatedUser
         });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to fetch user details",
+            error: error
+        });
+    }
+};
+
+export const userLoginStatus = async (req: Request, res: Response) => {
+    try {
+
+        const token = req.cookies.token;
+        // console.log('token: ', token);
+
+        if (!token) {
+            res.status(401).json({
+                status: 401,
+                success: false,
+                message: "Not authorized, please login again"
+            });
+        };
+        // console.log("check", process.env.JWT_SECRET as string);
+        const decoded = jwt.verify(token, process.env.JWT_ACCESS as string) as JwtPayload;
+
+        if (decoded) {
+            res.status(200).json({
+                status: 200,
+                success: true,
+                result: true
+            });
+            return;
+        } else {
+            res.status(401).json({
+                status: 401,
+                success: false,
+                result: false
+            });
+            return;
+        }
     } catch (error) {
         console.log(error);
         res.status(500).json({

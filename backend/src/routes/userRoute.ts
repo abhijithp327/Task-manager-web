@@ -1,5 +1,5 @@
 import express from "express";
-import { getUserProfile, loginUser, logoutUser, registerUser, updateUser } from "../controllers/auth/userController";
+import { getUserProfile, loginUser, logoutUser, registerUser, updateUser, userLoginStatus } from "../controllers/auth/userController";
 import { verifyToken } from "../middleware/authMiddleware";
 
 
@@ -11,6 +11,7 @@ router.post('/login', loginUser);
 router.post('/logout', logoutUser);
 router.get('/profile', verifyToken, getUserProfile);
 router.put('/update-user', verifyToken, updateUser);
+router.get('/login-status', userLoginStatus);
 
 
 export default router;

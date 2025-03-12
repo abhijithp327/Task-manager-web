@@ -51,3 +51,21 @@ export const verifyAdmin = (req: AuthRequest, res: Response, next: NextFunction)
     });
 
 };
+
+
+
+// creator middleware
+export const verifyCreator = (req: AuthRequest, res: Response, next: NextFunction) => {
+    // console.log(req.user?.usr_role);
+
+    if (req.user?.usr_role === "admin" || req.user?.usr_role === "creator") {
+        return next();
+    }
+
+    res.status(403).json({
+        status: 403,
+        success: false,
+        message: "You are not admin or creator, Access denied"
+    });
+
+};
