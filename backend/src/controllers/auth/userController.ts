@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { Request, Response } from "express";
 import Joi from "joi";
 import bcrypt from "bcrypt";
 import getErrorsInArray from "../../utils/joiError";
@@ -7,6 +7,9 @@ import User from "../../models/auth/userModel";
 import { generateAccessToken } from "../../utils/token";
 
 
+interface AuthRequest extends Request {
+    user?: { userId: string };
+}
 
 
 export const registerUser = async (req: Request, res: Response) => {
@@ -88,5 +91,175 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 };
 
+export const loginUser = async (req: Request, res: Response) => {
+    try {
+
+        const { usr_email, usr_password } = req.body;
+
+        const schema = Joi.object({
+            usr_email: Joi.string().email().required().label("Email"),
+            usr_password: Joi.string().required().label("Password"),
+        });
+
+        const { error } = schema.validate({ usr_email, usr_password }, joiOptions);
+
+        if (error) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Validation Error",
+                error: getErrorsInArray(error.details),
+            });
+            return;
+        };
+
+        let user = await User.findOne({ usr_email });
+        if (!user) {
+            res.status(404).json({
+                status: 404,
+                success: false,
+                message: "Invalid email or password",
+            });
+            return;
+        };
+
+        const isPasswordValid = await bcrypt.compare(usr_password, user.usr_password);
+
+        if (!isPasswordValid) {
+            res.status(401).json({
+                status: 401,
+                success: false,
+                message: "Invalid email or password",
+            });
+            return;
+        };
 
 
+        const token = generateAccessToken({
+            ...user.toObject(),
+            userId: user._id.toString(),
+        });
+
+
+        // Set cookies with appropriate security options
+        res.cookie('token', token, {
+            httpOnly: true, // Prevents JavaScript access to the cookie
+            secure: process.env.NODE_ENV === 'production', // Only sends cookie over HTTPS in production
+            sameSite: 'strict', // Protects against CSRF
+            maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days in milliseconds
+        });
+
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Login successful",
+            result: {
+                userId: user._id,
+                usr_name: user.usr_name,
+                usr_email: user.usr_email,
+                usr_role: user.usr_role,
+                usr_photo: user.usr_photo,
+                usr_bio: user.usr_bio,
+                isVerified: user.isVerified,
+                token
+            },
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to login user",
+            error: error
+        });
+    }
+};
+
+export const logoutUser = async (req: Request, res: Response) => {
+    try {
+
+        // Clear cookies by setting them to empty with immediate expiry
+        res.cookie('accessToken', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            expires: new Date(0), // Immediately expire the cookie
+        });
+
+        res.cookie('refreshToken', '', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            expires: new Date(0),
+        });
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Logout successful",
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to logout",
+            error: error,
+        });
+    }
+};
+
+export const getUserProfile = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+
+        const user = await User.findById(userId).select('-usr_password');
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "User details fetched successfully",
+            result: user
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to fetch user details",
+            error: error
+        });
+    }
+};
+
+
+export const updateUser = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        const { usr_name, usr_bio, usr_photo } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+            usr_name,
+            usr_bio,
+            usr_photo
+        }, {
+            new: true
+        }).select('-usr_password');
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "User details fetched successfully",
+            result: updatedUser
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to fetch user details",
+            error: error
+        });
+    }
+};
