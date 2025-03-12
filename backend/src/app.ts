@@ -6,6 +6,7 @@ import connectDb from './config/dbConfig';
 
 
 import userRoutes from './routes/userRoute';
+import adminRoutes from './routes/adminRoute';
 
 
 dotenv.config();
@@ -24,7 +25,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
-app.use("/api/v1/user", userRoutes)
+app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/admin", adminRoutes);
 
 
 
