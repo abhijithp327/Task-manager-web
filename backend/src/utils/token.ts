@@ -32,7 +32,10 @@ export const generateRefreshToken = (user: User): string => {
 
 
 // Generate a unique reset token
-export const generateToken = (): string => crypto.randomBytes(20).toString("hex");
+export const generateToken =  (): string => crypto.randomBytes(64).toString("hex");
+
+// hast the token using sha256
+export const hashToken = (token: string): string => crypto.createHash("sha256").update(token).digest("hex");
 
 // Function to check if a token is expired
 export const isTokenExpired = (expiresAt: string | Date): boolean => {

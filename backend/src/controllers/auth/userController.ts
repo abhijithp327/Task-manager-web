@@ -4,9 +4,12 @@ import bcrypt from "bcrypt";
 import getErrorsInArray from "../../utils/joiError";
 import { joiOptions } from "../../utils/joiOptions";
 import User from "../../models/auth/userModel";
-import { generateAccessToken } from "../../utils/token";
+import { generateAccessToken, generateToken, hashToken } from "../../utils/token";
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import Token from "../../models/auth/tokenModel";
+import { verifyAdmin } from '../../middleware/authMiddleware';
+import { sendEmailVerificationLink, sendResetPasswordLink } from "../../utils/emailTemplates";
 
 dotenv.config();
 
@@ -305,6 +308,204 @@ export const userLoginStatus = async (req: Request, res: Response) => {
             status: 500,
             success: false,
             message: "Failed to fetch user details",
+            error: error
+        });
+    }
+};
+
+export const sendVerifyEmail = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.userId;
+        const user = await User.findById(userId);
+        if (user?.isVerified) {
+            res.status(200).json({
+                status: 200,
+                success: true,
+                message: "Email already verified",
+            });
+            return;
+        };
+
+        let token = await Token.findOne({ userId });
+
+        if (token) {
+            await token.deleteOne();
+            return;
+        };
+
+        // create a verification token
+        const verificationToken = generateToken();
+
+        const hashedToken = hashToken(verificationToken);
+
+        await Token.create({
+            userId: user?._id,
+            verificationToken: hashedToken,
+            createdAt: Date.now(),
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+        });
+
+
+        const verificationLink = `${process.env.BASE_URL}/verify-email?token=${verificationToken}`;
+        console.log('verificationToken: ', verificationToken);
+
+
+        // send email
+        if (user?.usr_email) {
+            await sendEmailVerificationLink(user?.usr_email, verificationLink);
+        } else {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Email not found",
+            });
+            return;
+        };
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Verification email sent successfully",
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to send verification email",
+            error: error
+        });
+    }
+};
+
+export const verifyEmail = async (req: Request, res: Response) => {
+    try {
+
+        const { verificationToken } = req.params;
+
+        if (!verificationToken) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Invalid verification token",
+            });
+            return;
+        };
+
+        const hashedToken = hashToken(verificationToken);
+        console.log('hashedToken: ', hashedToken);
+
+        const userToken = await Token.findOne({
+            verificationToken: hashedToken,
+            expiresAt: { $gt: Date.now() }
+        });
+
+        if (!userToken) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Invalid or expired verification token",
+            });
+            return;
+        };
+
+        const user = await User.findByIdAndUpdate(userToken?.userId);
+
+        if (user?.isVerified) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Email already verified",
+            });
+            return;
+        };
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Email verified successfully"
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to verify email",
+            error: error
+        });
+    }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+    try {
+
+        const { usr_email } = req.body;
+
+        const schema = Joi.object({
+            usr_email: Joi.string().email().required().label("Email"),
+        });
+
+        const { error } = schema.validate({ usr_email }, joiOptions);
+
+        if (error) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Validation Error",
+                error: getErrorsInArray(error.details),
+            });
+            return;
+        };
+
+        const user = await User.findOne({ usr_email });
+
+        if (!user) {
+            res.status(404).json({
+                status: 404,
+                success: false,
+                message: "User not found",
+            });
+            return;
+        };
+
+
+        let token = await Token.findOne({ userId: user._id });
+
+        if (token) {
+            await token.deleteOne();
+        };
+
+        const passwordResetToken = generateToken();
+
+        const hashedToken = hashToken(passwordResetToken);
+
+        await Token.updateOne({
+            userId: user._id,
+            passwordResetToken: hashedToken,
+            createdAt: Date.now(),
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+        });
+
+        // reset link
+        const resetLink = `${process.env.BASE_URL}/reset-password?token=${passwordResetToken}`;
+
+        // send email
+        await sendResetPasswordLink(user.usr_email, resetLink);
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Password reset link sent successfully",
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to send password reset link",
             error: error
         });
     }
