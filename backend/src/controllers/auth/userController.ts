@@ -15,7 +15,7 @@ dotenv.config();
 
 interface AuthRequest extends Request {
     user?: { userId: string };
-}
+};
 
 
 export const registerUser = async (req: Request, res: Response) => {
