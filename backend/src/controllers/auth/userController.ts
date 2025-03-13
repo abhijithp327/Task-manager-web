@@ -8,8 +8,7 @@ import { generateAccessToken, generateToken, hashToken } from "../../utils/token
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import Token from "../../models/auth/tokenModel";
-import { verifyAdmin } from '../../middleware/authMiddleware';
-import { sendEmailVerificationLink, sendResetPasswordLink } from "../../utils/emailTemplates";
+import { sendEmailVerificationLink, sendPasswordResetSuccessEmail, sendResetPasswordLink } from "../../utils/emailTemplates";
 
 dotenv.config();
 
@@ -326,12 +325,17 @@ export const sendVerifyEmail = async (req: AuthRequest, res: Response) => {
             return;
         };
 
-        let token = await Token.findOne({ userId });
-
-        if (token) {
-            await token.deleteOne();
+        if (!user) {
+            res.status(404).json({
+                status: 404,
+                success: false,
+                message: "User not found",
+            });
             return;
         };
+
+        // Remove existing token if any
+        await Token.deleteOne({ userId: user._id });
 
         // create a verification token
         const verificationToken = generateToken();
@@ -394,7 +398,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
         };
 
         const hashedToken = hashToken(verificationToken);
-        console.log('hashedToken: ', hashedToken);
+        // console.log('hashedToken: ', hashedToken);
 
         const userToken = await Token.findOne({
             verificationToken: hashedToken,
@@ -410,7 +414,7 @@ export const verifyEmail = async (req: Request, res: Response) => {
             return;
         };
 
-        const user = await User.findByIdAndUpdate(userToken?.userId);
+        const user = await User.findByIdAndUpdate(userToken?.userId, { isVerified: true }, { new: true });
 
         if (user?.isVerified) {
             res.status(400).json({
@@ -420,6 +424,9 @@ export const verifyEmail = async (req: Request, res: Response) => {
             });
             return;
         };
+
+        // ✅ DELETE THE TOKEN AFTER SUCCESS
+        await Token.deleteOne({ _id: userToken._id });
 
         res.status(200).json({
             status: 200,
@@ -470,23 +477,21 @@ export const forgotPassword = async (req: Request, res: Response) => {
             return;
         };
 
-
-        let token = await Token.findOne({ userId: user._id });
-
-        if (token) {
-            await token.deleteOne();
-        };
+        // Remove existing token if any
+        await Token.deleteOne({ userId: user._id });
 
         const passwordResetToken = generateToken();
+        console.log('passwordResetToken: ', passwordResetToken);
 
         const hashedToken = hashToken(passwordResetToken);
 
-        await Token.updateOne({
+        await Token.create({
             userId: user._id,
             passwordResetToken: hashedToken,
             createdAt: Date.now(),
-            expiresAt: new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+            expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1 hour expiry
         });
+
 
         // reset link
         const resetLink = `${process.env.BASE_URL}/reset-password?token=${passwordResetToken}`;
@@ -506,6 +511,82 @@ export const forgotPassword = async (req: Request, res: Response) => {
             status: 500,
             success: false,
             message: "Failed to send password reset link",
+            error: error
+        });
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+    try {
+
+        const { passwordResetToken } = req.params;
+        const { usr_password } = req.body;
+
+        const schema = Joi.object({
+            usr_password: Joi.string().required().label("Password"),
+        });
+
+        const { error } = schema.validate({ usr_password }, joiOptions);
+
+        if (error) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Validation Error",
+                error: getErrorsInArray(error.details),
+            });
+            return;
+        };
+
+        const hashedToken = hashToken(passwordResetToken);
+
+        const userToken = await Token.findOne({
+            passwordResetToken: hashedToken,
+            expiresAt: { $gt: Date.now() }
+        });
+
+        if (!userToken) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Invalid or expired password reset token",
+            });
+            return;
+        };
+
+        const user = await User.findById(userToken?.userId);
+
+        if (!user) {
+            res.status(404).json({
+                status: 404,
+                success: false,
+                message: "User not found",
+            });
+            return;
+        };
+
+        const hashPassword = await bcrypt.hash(usr_password, 12);
+
+        await User.findByIdAndUpdate(user._id, { usr_password: hashPassword });
+
+        // ✅ DELETE THE TOKEN AFTER SUCCESS
+        await Token.deleteOne({ _id: userToken._id });
+
+        // send email
+        await sendPasswordResetSuccessEmail(user.usr_email);
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Password reset successfully",
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to reset password",
             error: error
         });
     }

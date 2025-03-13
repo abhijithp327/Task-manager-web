@@ -1,5 +1,5 @@
 import express from "express";
-import { getUserProfile, loginUser, logoutUser, registerUser, sendVerifyEmail, updateUser, userLoginStatus, verifyEmail } from '../controllers/auth/userController';
+import { forgotPassword, getUserProfile, loginUser, logoutUser, registerUser, resetPassword, sendVerifyEmail, updateUser, userLoginStatus, verifyEmail } from '../controllers/auth/userController';
 import { verifyToken } from "../middleware/authMiddleware";
 
 
@@ -14,5 +14,7 @@ router.put('/update-user', verifyToken, updateUser);
 router.put('/verify-email/:verificationToken', verifyEmail);
 router.get('/login-status', userLoginStatus);
 router.post('/send-email', verifyToken, sendVerifyEmail);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password/:passwordResetToken', resetPassword);
 
 export default router;

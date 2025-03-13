@@ -158,3 +158,68 @@ export const sendResetPasswordLink = async (email: string, resetLink: string): P
     }
 };
 
+// send email to notify user of password change
+export const sendPasswordResetSuccessEmail = async (email: string): Promise<void> => {
+    const emailData = {
+        from: process.env.FROM_GMAIL as string,
+        email: email,
+        subject: "Task Manager - Password Reset Successful",
+        html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                .container {
+                    font-family: Arial, sans-serif;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    background-color: #f9f9f9;
+                }
+                .header {
+                    background-color: #28a745;
+                    color: #fff;
+                    padding: 10px;
+                    text-align: center;
+                    border-radius: 5px 5px 0 0;
+                }
+                .content {
+                    padding: 20px;
+                    text-align: center;
+                }
+                .footer {
+                    margin-top: 20px;
+                    text-align: center;
+                    color: #666;
+                    font-size: 12px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>Password Reset Successful</h2>
+                </div>
+                <div class="content">
+                    <p>Hello,</p>
+                    <p>Your password has been successfully reset. You can now log in using your new password.</p>
+                    <p>If you did not perform this action, please contact our support team immediately.</p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated message. Please do not reply to this email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `,
+    };
+
+    try {
+        await sendMail(emailData);
+    } catch (error) {
+        throw new Error(`Failed to send password reset success email: ${error}`);
+    }
+};
+
