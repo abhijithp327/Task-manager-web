@@ -591,3 +591,71 @@ export const resetPassword = async (req: Request, res: Response) => {
         });
     }
 };
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+    try {
+
+        const userId = req.user?.userId;
+
+        const { currentPassword, newPassword } = req.body;
+
+        const schema = Joi.object({
+            currentPassword: Joi.string().required().label("Current Password"),
+            newPassword: Joi.string().required().label("New Password"),
+        });
+
+        const { error } = schema.validate({ currentPassword, newPassword }, joiOptions);
+
+        if (error) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Validation Error",
+                error: getErrorsInArray(error.details),
+            });
+            return;
+        };
+
+        const user = await User.findById(userId);
+
+        if (!user) {
+            res.status(404).json({
+                status: 404,
+                success: false,
+                message: "User not found",
+            });
+            return;
+        };
+
+        const isMatch = await bcrypt.compare(currentPassword, user.usr_password as string);
+
+        if (!isMatch) {
+            res.status(400).json({
+                status: 400,
+                success: false,
+                message: "Current password is incorrect",
+            });
+            return;
+        };
+
+        const hashPassword = await bcrypt.hash(newPassword, 12);
+
+        await User.findByIdAndUpdate(user._id, { usr_password: hashPassword });
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Password changed successfully",
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to change password",
+            error: error
+        });
+
+    }
+};
