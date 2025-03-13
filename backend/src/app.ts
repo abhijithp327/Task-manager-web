@@ -7,6 +7,7 @@ import connectDb from './config/dbConfig';
 
 import userRoutes from './routes/userRoute';
 import adminRoutes from './routes/adminRoute';
+import errorHandler from './helper/errorHandler';
 
 
 dotenv.config();
@@ -28,7 +29,8 @@ app.use(cookieParser());
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
-
+// error handler middleware
+app.use(errorHandler);
 
 app.get('/', (req: Request, res: Response) => {
     res.json('Task management server is running... ✅🚀');
