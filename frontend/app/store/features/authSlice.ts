@@ -15,6 +15,12 @@ const initialState = {
     isUserLoggedIn: false,
     isUserLoginError: false,
 
+    // get user details
+    isUserGettingDetails: false,
+    isUserGotDetails: false,
+    isUserGetDetailsError: false,
+
+
 };
 
 
@@ -35,6 +41,16 @@ export const loginUser = createAsyncThunk('loginUser', async (data: any, thunkAP
         return thunkAPI.fulfillWithValue(response.data);
     } catch (error: any) {
         console.log("Login error:", error); // Log detailed error message
+        return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
+    }
+});
+
+export const getUserDetails = createAsyncThunk('getUserDetails', async (_, thunkAPI) => {
+    try {
+        const response = await auth.getUserDetails();
+        return thunkAPI.fulfillWithValue(response.data);
+    } catch (error: any) {
+        console.log("Get user details error:", error); // Log detailed error message
         return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
     }
 });
@@ -81,6 +97,24 @@ const authSlice = createSlice({
                 state.isUserLoggingIn = false;
                 state.isUserLoggedIn = false;
                 state.isUserLoginError = true;
+            })
+
+            // get user details
+
+            .addCase(getUserDetails.pending, (state) => {
+                state.isUserGettingDetails = true;
+                state.isUserGotDetails = false;
+                state.isUserGetDetailsError = false;
+            })
+            .addCase(getUserDetails.fulfilled, (state) => {
+                state.isUserGettingDetails = false;
+                state.isUserGotDetails = true;
+                state.isUserGetDetailsError = false;
+            })
+            .addCase(getUserDetails.rejected, (state) => {
+                state.isUserGettingDetails = false;
+                state.isUserGotDetails = false;
+                state.isUserGetDetailsError = true;
             })
     },
 });

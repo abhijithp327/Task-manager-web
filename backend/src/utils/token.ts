@@ -4,7 +4,8 @@ import { ObjectId } from "mongoose";
 
 interface User {
   userId: string | ObjectId;
-  usr_role: string
+  usr_role: string,
+  usr_email: string
 };
 
 // Generate Access Token
@@ -12,6 +13,7 @@ export const generateAccessToken = (user: User): string => {
   return jwt.sign(
     {
       userId: user.userId.toString(),
+      usr_email: user.usr_email,
       usr_role: user.usr_role,
     },
     process.env.JWT_ACCESS as string, // Type assertion to ensure it's a string

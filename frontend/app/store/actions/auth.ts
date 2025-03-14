@@ -23,4 +23,14 @@ export const auth = {
         }
     },
 
+    getUserDetails: async () => {
+        try {
+            const response = await Axios.get("user/profile");
+            return response;
+        } catch (error: any) {
+            console.error("Error getting user details:", error);
+            return error.response;
+        }
+    },
+
 };

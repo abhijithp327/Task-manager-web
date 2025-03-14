@@ -2,6 +2,11 @@
 
 import React from 'react';
 import LoadingButton from '@/app/components/buttons/Loadingbutton';
+import { useDispatch } from 'react-redux';
+import { useRouter } from "next/navigation";
+import { AppDispatch } from '@/app/store/store';
+import { getUserDetails } from '@/app/store/features/authSlice';
+import { FaEdit } from "react-icons/fa";
 
 interface FormData {
     usr_email: string;
@@ -13,31 +18,63 @@ interface FormErrors {
 
 const Verify = () => {
 
+    const dispatch = useDispatch<AppDispatch>();
+
+    const navigate = useRouter();
+
     const [loading, setLoading] = React.useState<boolean>(false);
 
     const [formData, setFormData] = React.useState<FormData>({
-        usr_email: ""
+        usr_email: "",
     });
 
-     const [formErrors, setFormErrors] = React.useState<FormErrors>({});
-    
-        const validateForm = (): boolean => {
-    
-            const errors: FormErrors = {};
-    
-            // Validate email address
-            if (!formData.usr_email.trim()) {
-                errors.usr_email = "Email address is required.";
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.usr_email)) {
-                errors.usr_email = "Please enter a valid email address.";
+    const [isEditing, setIsEditing] = React.useState<boolean>(false);
+
+    const [formErrors, setFormErrors] = React.useState<FormErrors>({});
+
+    const validateForm = (): boolean => {
+
+        const errors: FormErrors = {};
+
+        // Validate email address
+        if (!formData.usr_email.trim()) {
+            errors.usr_email = "Email address is required.";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.usr_email)) {
+            errors.usr_email = "Please enter a valid email address.";
+        }
+
+        setFormErrors(errors);
+
+        return Object.keys(errors).length === 0; // Return true if there are no errors
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    React.useEffect(() => {
+        const fetchUserDetails = async () => {
+            try {
+                const response = await dispatch(getUserDetails());
+                if (response.payload.success) {
+                    setFormData({
+                        usr_email: response.payload.result.usr_email
+                    });
+                }
+            } catch (error) {
+                console.log(error);
             }
-    
-            if (!formData.usr_password.trim()) errors.usr_password = "Password is required.";
-    
-            setFormErrors(errors);
-    
-            return Object.keys(errors).length === 0; // Return true if there are no errors
         };
+        fetchUserDetails();
+    }, []);
+
+    const handleUpdateEmail = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!validateForm()) return;
+        setLoading(true);
+        setIsEditing(false);
+
+    };
 
     const handleSendVerificationLink = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -61,14 +98,24 @@ const Verify = () => {
                             {/* Email */}
                             <div className="flex flex-col gap-1">
                                 <label htmlFor="usr_email">Email</label>
-                                <input
-                                    type="email"
-                                    name="usr_email"
-                                    id="usr_email"
-                                    placeholder="Enter your email address"
-                                    className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                                    autoComplete="email"
-                                />
+                                <div className='relative'>
+                                    <input
+                                        type="email"
+                                        name="usr_email"
+                                        id="usr_email"
+                                        value={formData.usr_email}
+                                        onChange={handleInputChange}
+                                        className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                        autoComplete="email"
+                                        disabled={!isEditing}
+                                    />
+                                    <div className="absolute right-3 top-3 text-gray-500 cursor-pointer" onClick={() => setIsEditing(!isEditing)}>
+                                        <FaEdit className="w-5 h-4" />
+                                    </div>
+                                </div>
+                                {!isEditing && (
+                                    <p className="text-xs text-red-500 mt-1">You cannot edit this email. Click the edit icon if you need to update it.</p>
+                                )}
                             </div>
 
                             {/*  Button */}

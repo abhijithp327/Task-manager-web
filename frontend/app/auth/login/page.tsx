@@ -69,7 +69,11 @@ const Login = () => {
             console.log('response: ', response);
             if (response.payload.success) {
                 toast.success(response.payload.message);
-                navigate.push('/home');
+                if (response.payload.result.isVerified) {
+                    navigate.push('/dashboard');
+                } else {
+                    navigate.push(`/auth/verify`);
+                }
             } else {
                 toast.error(response.payload.message);
             }
@@ -139,7 +143,7 @@ const Login = () => {
                             {/* Register Button */}
                             <LoadingButton
                                 loading={loading}
-                                text="Register"
+                                text="Login"
                                 loadingText="Logging in..."
                                 type="submit"
                             />
