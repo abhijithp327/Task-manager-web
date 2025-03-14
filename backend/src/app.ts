@@ -20,12 +20,11 @@ const app = express();
 const port = process.env.PORT || 5001;
 
 const corsOptions = {
-    // origin: 'http://localhost:5173',
-    // origin: 'http://192.168.10.194:5173',
+    origin: 'http://localhost:3000',
     credentials: true
 };
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json());
