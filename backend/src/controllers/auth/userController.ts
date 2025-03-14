@@ -73,7 +73,7 @@ export const registerUser = async (req: Request, res: Response) => {
         res.status(201).json({
             status: 201,
             success: true,
-            message: "User created successfully",
+            message: "User created successfully, please verify your email",
             result: {
                 userId: newUser._id,
                 usr_name,
@@ -87,7 +87,7 @@ export const registerUser = async (req: Request, res: Response) => {
         });
 
     } catch (error) {
-        console.error("Error in registerUser:", error);
+        console.error("Error in register User:", error);
         res.status(500).json({
             status: 500,
             success: false,

@@ -8,7 +8,13 @@ const initialState = {
     // register
     isUserRegistering: false,
     isUserRegistered: false,
-    isUserRegisterError: false
+    isUserRegisterError: false,
+
+    // login
+    isUserLoggingIn: false,
+    isUserLoggedIn: false,
+    isUserLoginError: false,
+
 };
 
 
@@ -23,6 +29,15 @@ export const registerUser = createAsyncThunk('registerUser', async (data: any, t
     }
 });
 
+export const loginUser = createAsyncThunk('loginUser', async (data: any, thunkAPI) => {
+    try {
+        const response = await auth.login(data);
+        return thunkAPI.fulfillWithValue(response.data);
+    } catch (error: any) {
+        console.log("Login error:", error); // Log detailed error message
+        return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
+    }
+});
 
 
 const authSlice = createSlice({
@@ -31,6 +46,9 @@ const authSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
+
+            // register
+
             .addCase(registerUser.pending, (state) => {
                 state.isUserRegistering = true;
                 state.isUserRegistered = false;
@@ -45,7 +63,25 @@ const authSlice = createSlice({
                 state.isUserRegistering = false;
                 state.isUserRegistered = false;
                 state.isUserRegisterError = true;
-            });
+            })
+
+            // login
+
+            .addCase(loginUser.pending, (state) => {
+                state.isUserLoggingIn = true;
+                state.isUserLoggedIn = false;
+                state.isUserLoginError = false;
+            })
+            .addCase(loginUser.fulfilled, (state) => {
+                state.isUserLoggingIn = false;
+                state.isUserLoggedIn = true;
+                state.isUserLoginError = false;
+            })
+            .addCase(loginUser.rejected, (state) => {
+                state.isUserLoggingIn = false;
+                state.isUserLoggedIn = false;
+                state.isUserLoginError = true;
+            })
     },
 });
 

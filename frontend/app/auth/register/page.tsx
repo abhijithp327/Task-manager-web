@@ -88,10 +88,10 @@ const Register = () => {
         setLoading(true);
         try {
             const response = await dispatch(registerUser(formData));
-            console.log('response: ', response);
+            // console.log('response: ', response);
             if (response.payload?.success) {
                 toast.success(response.payload.message);
-                navigate.push('/auth/login');
+                navigate.push('/auth/verify');
             } else {
                 toast.error(response.payload.message);
             }

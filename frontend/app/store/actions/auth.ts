@@ -13,4 +13,14 @@ export const auth = {
         }
     },
 
+    login: async (data: any) => {
+        try {
+            const response = await Axios.post("user/login", data);
+            return response;
+        } catch (error: any) {
+            console.error("Error logging in user:", error);
+            return error.response;
+        }
+    },
+
 };
