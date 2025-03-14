@@ -5,8 +5,9 @@ import LoadingButton from '@/app/components/buttons/Loadingbutton';
 import { useDispatch } from 'react-redux';
 import { useRouter } from "next/navigation";
 import { AppDispatch } from '@/app/store/store';
-import { getUserDetails } from '@/app/store/features/authSlice';
+import { getUserDetails, sendVerificationLink, updateEmail } from '@/app/store/features/authSlice';
 import { FaEdit } from "react-icons/fa";
+import toast from 'react-hot-toast';
 
 interface FormData {
     usr_email: string;
@@ -73,11 +74,36 @@ const Verify = () => {
         if (!validateForm()) return;
         setLoading(true);
         setIsEditing(false);
+        try {
+            const response = await dispatch(updateEmail(formData));
+            console.log('response: ', response);
+            if (response.payload.success) {
+                toast.success(response.payload.message);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
 
     };
 
     const handleSendVerificationLink = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setLoading(true);
+        try {
+            const response = await dispatch(sendVerificationLink());
+            if (response.payload.success) {
+                toast.success(response.payload.message);
+                navigate.push('/auth/verify/success');
+            } else {
+                toast.error(response.payload.message);
+            }
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -93,7 +119,7 @@ const Verify = () => {
                             </p>
                         </div>
 
-                        <form className="flex flex-col gap-3" onSubmit={handleSendVerificationLink}>
+                        <form className="flex flex-col gap-3" onSubmit={isEditing ? handleUpdateEmail : handleSendVerificationLink}>
 
                             {/* Email */}
                             <div className="flex flex-col gap-1">
@@ -118,13 +144,22 @@ const Verify = () => {
                                 )}
                             </div>
 
-                            {/*  Button */}
-                            <LoadingButton
-                                loading={loading}
-                                text="Send Verification Link"
-                                loadingText="Sending..."
-                                type="submit"
-                            />
+                            {/* Conditional Button */}
+                            {isEditing ? (
+                                <LoadingButton
+                                    loading={loading}
+                                    text="Update Email"
+                                    loadingText="Updating..."
+                                    type="submit"
+                                />
+                            ) : (
+                                <LoadingButton
+                                    loading={loading}
+                                    text="Send Verification Link"
+                                    loadingText="Sending..."
+                                    type="submit"
+                                />
+                            )}
 
                         </form>
 

@@ -660,3 +660,59 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     }
 };
 
+export const updateEmail = async (req: AuthRequest, res: Response) => {
+    try {
+
+        const userId = req.user?.userId;
+
+        const { usr_email } = req.body;
+
+        if (!userId) {
+            res.status(401).json({
+                success: false,
+                message: "Unauthorized request. User ID is missing.",
+            });
+            return;
+        }
+
+        const user = await User.findById(userId);
+
+        // Check if the new email is the same as the current one
+        if (user?.usr_email === usr_email) {
+            res.status(400).json({
+                success: false,
+                message: "New email is the same as the current email.",
+            });
+            return;
+        }
+
+        // Check if the email is already in use by another user
+        const existingUser = await User.findOne({ usr_email });
+        if (existingUser) {
+             res.status(400).json({
+                success: false,
+                message: "This email is already associated with another account.",
+            });
+            return;
+        }
+
+        await User.findByIdAndUpdate(userId, { usr_email: usr_email });
+
+        res.status(200).json({
+            status: 200,
+            success: true,
+            message: "Email updated successfully",
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: 500,
+            success: false,
+            message: "Failed to update email",
+            error: error
+        });
+    }
+
+};
+
