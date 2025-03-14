@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux";
 import { registerUser } from '@/app/store/features/authSlice';
 import { AppDispatch } from '@/app/store/store';
 import { useRouter } from "next/navigation";
+import LoadingButton from '@/app/components/buttons/Loadingbutton';
 
 interface FormData {
     usr_name: string;
@@ -58,9 +59,14 @@ const Register = () => {
 
         if (!formData.usr_password.trim()) errors.usr_password = "Password is required.";
 
-        if (formData.usr_password !== formData.confirm_password) {
+        if (!formData.confirm_password.trim()) {
+            errors.confirm_password = "Confirm password is required.";
+
+        } else if (formData.usr_password !== formData.confirm_password) {
             errors.confirm_password = "Passwords do not match.";
+            toast.error("Passwords do not match. Please make sure both passwords are the same.");
         }
+
 
         setFormErrors(errors);
 
@@ -100,7 +106,7 @@ const Register = () => {
     return (
         <section>
             <div className='container px-6 py-12 mx-auto flex justify-center items-center h-screen'>
-                <div className='bg-gray-50 p-8 rounded-lg shadow-xl max-w-2xl max-h-[700px] mx-auto'>
+                <div className='bg-gray-50 p-8 rounded-lg shadow-xl max-w-2xl max-h-[850px] mx-auto'>
                     <div className='flex flex-col gap-5'>
 
                         <div className='flex flex-col gap-2'>
@@ -108,7 +114,7 @@ const Register = () => {
                             <p className='text-gray-600 font-normal text-sm'>If you are already a member you can login with your email address and password.</p>
                         </div>
 
-                        <form className="flex flex-col gap-5" onSubmit={handleRegister}>
+                        <form className="flex flex-col gap-3" onSubmit={handleRegister}>
 
                             {/* Name */}
                             <div className="flex flex-col gap-1">
@@ -122,6 +128,7 @@ const Register = () => {
                                     className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
                                     autoComplete="name"
                                 />
+                                {formErrors.usr_name && <p className="text-red-500 text-sm">{formErrors.usr_name}</p>}
                             </div>
 
                             {/* Email */}
@@ -136,6 +143,7 @@ const Register = () => {
                                     className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
                                     autoComplete="email"
                                 />
+                                {formErrors.usr_email && <p className="text-red-500 text-sm">{formErrors.usr_email}</p>}
                             </div>
 
                             {/* Password */}
@@ -162,6 +170,7 @@ const Register = () => {
                                         )}
                                     </div>
                                 </div>
+                                {formErrors.usr_password && <p className="text-red-500 text-sm">{formErrors.usr_password}</p>}
                             </div>
 
                             {/* Confirm Password */}
@@ -188,15 +197,18 @@ const Register = () => {
                                         )}
                                     </div>
                                 </div>
+                                {formErrors.confirm_password && <p className="text-red-500 text-sm">{formErrors.confirm_password}</p>}
                             </div>
 
                             {/* Register Button */}
-                            <button
+                            <LoadingButton
+                                loading={loading}
+                                text="Register"
+                                loadingText="Signing up..."
                                 type="submit"
-                                className="bg-blue-600 text-white w-full p-2 rounded-md hover:bg-blue-700"
-                            >
-                                Register
-                            </button>
+                            />
+
+
                         </form>
 
 
