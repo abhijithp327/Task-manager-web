@@ -48,8 +48,12 @@ const initialState = {
     // forgot password
     isUserSendingForgotPasswordLink: false,
     isUserSentForgotPasswordLink: false,
-    isUserSendForgotPasswordLinkError: false
+    isUserSendForgotPasswordLinkError: false,
 
+    // reset password
+    isUserResettingPassword: false,
+    isUserResetPassword: false,
+    isUserResetPasswordError: false,
 
 };
 
@@ -134,6 +138,16 @@ export const forgotPassword = createAsyncThunk('forgotPassword', async (data: an
         return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
     }
 });
+
+export const resetPassword = createAsyncThunk('resetPassword', async ({ data, token }: { data: any; token: string }, thunkAPI) => {
+    try {
+        const response = await auth.resetPassword(data, token);
+        return thunkAPI.fulfillWithValue(response.data);
+    } catch (error: any) {
+        console.log("Reset password error:", error); // Log detailed error message
+        return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
+    }
+})
 
 const authSlice = createSlice({
     name: "auth",
@@ -297,6 +311,24 @@ const authSlice = createSlice({
                 state.isUserSendingForgotPasswordLink = false;
                 state.isUserSentForgotPasswordLink = false;
                 state.isUserSendForgotPasswordLinkError = true;
+            })
+
+            // reset password
+
+            .addCase(resetPassword.pending, (state) => {
+                state.isUserResettingPassword = true;
+                state.isUserResetPassword = false;
+                state.isUserResetPasswordError = false;
+            })
+            .addCase(resetPassword.fulfilled, (state) => {
+                state.isUserResettingPassword = false;
+                state.isUserResetPassword = true;
+                state.isUserResetPasswordError = false;
+            })
+            .addCase(resetPassword.rejected, (state) => {
+                state.isUserResettingPassword = false;
+                state.isUserResetPassword = false;
+                state.isUserResetPasswordError = true;
             })
     },
 });

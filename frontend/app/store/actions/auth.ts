@@ -2,7 +2,7 @@ import { send } from 'process';
 import Axios from '../axiosInstance/axiosInstance';
 import { sendEmailVerificationLink } from '../../../../backend/src/utils/emailTemplates';
 import { verify } from 'crypto';
-import { forgotPassword, verifyEmail } from '../../../../backend/src/controllers/auth/userController';
+import { forgotPassword, resetPassword, verifyEmail } from '../../../../backend/src/controllers/auth/userController';
 import { logout } from '../features/authSlice';
 
 
@@ -84,6 +84,16 @@ export const auth = {
             return response;
         } catch (error: any) {
             console.error("Error forgot password:", error);
+            return error.response;
+        }
+    },
+
+    resetPassword: async (data: any, token: string) => {
+        try {
+            const response = await Axios.post(`user/reset-password/${token}`, data);
+            return response;
+        } catch (error: any) {
+            console.error("Error reset password:", error);
             return error.response;
         }
     },

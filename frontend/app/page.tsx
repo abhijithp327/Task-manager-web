@@ -15,8 +15,7 @@ const page = () => {
 
   const handleLogout = async () => {
     try {
-      const response = await dispatch(logoutUser());
-
+      await dispatch(logoutUser());
     } catch (error) {
       console.log(error);
     }

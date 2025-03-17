@@ -492,7 +492,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
 
         // reset link
-        const resetLink = `${process.env.BASE_URL}/reset-password?token=${passwordResetToken}`;
+        const resetLink = `${process.env.BASE_URL}/auth/reset-password?token=${passwordResetToken}`;
 
         // send email
         await sendResetPasswordLink(user.usr_email, resetLink);

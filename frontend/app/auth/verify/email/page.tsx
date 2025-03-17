@@ -15,6 +15,7 @@ const Lottie = dynamic(() => import("react-lottie-player"), { ssr: false });
 
 
 const VerifyEmail = () => {
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
