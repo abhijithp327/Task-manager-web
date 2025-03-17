@@ -1,6 +1,9 @@
 import { send } from 'process';
 import Axios from '../axiosInstance/axiosInstance';
 import { sendEmailVerificationLink } from '../../../../backend/src/utils/emailTemplates';
+import { verify } from 'crypto';
+import { verifyEmail } from '../../../../backend/src/controllers/auth/userController';
+import { logout } from '../features/authSlice';
 
 
 export const auth = {
@@ -51,6 +54,26 @@ export const auth = {
             return response;
         } catch (error: any) {
             console.error("Error updating user email:", error);
+            return error.response;
+        }
+    },
+
+    verifyEmail: async (data: any) => {
+        try {
+            const response = await Axios.put(`user/verify-email/${data}`);
+            return response;
+        } catch (error: any) {
+            console.error("Error verifying email:", error);
+            return error.response;
+        }
+    },
+
+    logoutUser: async () => {
+        try {
+            const response = await Axios.post("user/logout");
+            return response;
+        } catch (error: any) {
+            console.error("Error logging out user:", error);
             return error.response;
         }
     },

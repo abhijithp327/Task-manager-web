@@ -159,7 +159,7 @@ export const loginUser = async (req: Request, res: Response) => {
         res.status(200).json({
             status: 200,
             success: true,
-            message: "Login successful, Please verify your email address",
+            message: "Login successful",
             result: {
                 userId: user._id,
                 usr_name: user.usr_name,
@@ -186,18 +186,12 @@ export const logoutUser = async (req: Request, res: Response) => {
     try {
 
         // Clear cookies by setting them to empty with immediate expiry
-        res.cookie('accessToken', '', {
+        res.cookie('token', '', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             expires: new Date(0), // Immediately expire the cookie
-        });
-
-        res.cookie('refreshToken', '', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            expires: new Date(0),
+            path: "/",
         });
 
         res.status(200).json({
@@ -316,9 +310,11 @@ export const sendVerifyEmail = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.userId;
         const user = await User.findById(userId);
+
+
         if (user?.isVerified) {
-            res.status(200).json({
-                status: 200,
+            res.status(400).json({
+                status: 400,
                 success: true,
                 message: "Email already verified",
             });
@@ -350,7 +346,7 @@ export const sendVerifyEmail = async (req: AuthRequest, res: Response) => {
         });
 
 
-        const verificationLink = `${process.env.BASE_URL}/verify-email?token=${verificationToken}`;
+        const verificationLink = `${process.env.BASE_URL}/auth/verify/email?token=${verificationToken}`;
         console.log('verificationToken: ', verificationToken);
 
 
@@ -414,16 +410,18 @@ export const verifyEmail = async (req: Request, res: Response) => {
             return;
         };
 
-        const user = await User.findByIdAndUpdate(userToken?.userId, { isVerified: true }, { new: true });
+        const user = await User.findById(userToken?.userId);
 
         if (user?.isVerified) {
-            res.status(400).json({
+            res.status(401).json({
                 status: 400,
                 success: false,
                 message: "Email already verified",
             });
             return;
         };
+
+        await User.updateOne({ _id: userToken?.userId }, { isVerified: true });
 
         // ✅ DELETE THE TOKEN AFTER SUCCESS
         await Token.deleteOne({ _id: userToken._id });

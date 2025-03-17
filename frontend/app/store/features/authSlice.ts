@@ -6,6 +6,10 @@ import { auth } from "../actions/auth";
 
 
 const initialState = {
+
+    user: null,
+    isLoggedIn: false,
+
     // register
     isUserRegistering: false,
     isUserRegistered: false,
@@ -30,6 +34,16 @@ const initialState = {
     isUserUpdatingEmail: false,
     isUserUpdatedEmail: false,
     isUserUpdateEmailError: false,
+
+    // verify email 
+    isUserVerifyingEmail: false,
+    isUserVerifiedEmail: false,
+    isUserVerifyEmailError: false,
+
+    // logout
+    isUserLoggingOut: false,
+    isUserLoggedOut: false,
+    isUserLogoutError: false
 
 
 };
@@ -86,11 +100,39 @@ export const updateEmail = createAsyncThunk('updateEmail', async (data: any, thu
     }
 });
 
+export const verifyEmail = createAsyncThunk('verifyEmail', async (data: any, thunkAPI) => {
+    try {
+        const response = await auth.verifyEmail(data);
+        return thunkAPI.fulfillWithValue(response.data);
+    } catch (error: any) {
+        console.log("Verify email error:", error); // Log detailed error message
+        return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
+    }
+});
+
+export const logoutUser = createAsyncThunk('logoutUser', async (_, thunkAPI) => {
+    try {
+        const response = await auth.logoutUser();
+        return thunkAPI.fulfillWithValue(response.data);
+    } catch (error: any) {
+        console.log("Logout error:", error); // Log detailed error message
+        return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
+    }
+});
 
 const authSlice = createSlice({
     name: "auth",
     initialState,
-    reducers: {},
+    reducers: {
+        setUser: (state, action) => {
+            state.user = action.payload.result;
+            state.isLoggedIn = true;
+        },
+        logout: (state) => {
+            state.user = null;
+            state.isLoggedIn = false;
+        },
+    },
     extraReducers: (builder) => {
         builder
 
@@ -119,10 +161,12 @@ const authSlice = createSlice({
                 state.isUserLoggedIn = false;
                 state.isUserLoginError = false;
             })
-            .addCase(loginUser.fulfilled, (state) => {
+            .addCase(loginUser.fulfilled, (state, action) => {
                 state.isUserLoggingIn = false;
                 state.isUserLoggedIn = true;
                 state.isUserLoginError = false;
+                state.user = action.payload.result;
+                state.isLoggedIn = true;
             })
             .addCase(loginUser.rejected, (state) => {
                 state.isUserLoggingIn = false;
@@ -182,8 +226,47 @@ const authSlice = createSlice({
                 state.isUserUpdatingEmail = false;
                 state.isUserUpdatedEmail = false;
                 state.isUserUpdateEmailError = true;
+            })
+
+            // verify email
+
+            .addCase(verifyEmail.pending, (state) => {
+                state.isUserVerifyingEmail = true;
+                state.isUserVerifiedEmail = false;
+                state.isUserVerifyEmailError = false;
+            })
+            .addCase(verifyEmail.fulfilled, (state) => {
+                state.isUserVerifyingEmail = false;
+                state.isUserVerifiedEmail = true;
+                state.isUserVerifyEmailError = false;
+            })
+            .addCase(verifyEmail.rejected, (state) => {
+                state.isUserVerifyingEmail = false;
+                state.isUserVerifiedEmail = false;
+                state.isUserVerifyEmailError = true;
+            })
+
+            // logout
+
+            .addCase(logoutUser.pending, (state) => {
+                state.isUserLoggingOut = true;
+                state.isUserLoggedOut = false;
+                state.isUserLogoutError = false;
+            })
+            .addCase(logoutUser.fulfilled, (state) => {
+                state.isUserLoggingOut = false;
+                state.isUserLoggedOut = true;
+                state.isUserLogoutError = false;
+                state.user = null;
+                state.isLoggedIn = false;
+            })
+            .addCase(logoutUser.rejected, (state) => {
+                state.isUserLoggingOut = false;
+                state.isUserLoggedOut = false;
+                state.isUserLogoutError = true;
             });
     },
 });
 
+export const { setUser, logout } = authSlice.actions;
 export default authSlice.reducer;

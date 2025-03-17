@@ -79,13 +79,15 @@ const Verify = () => {
             console.log('response: ', response);
             if (response.payload.success) {
                 toast.success(response.payload.message);
+            } else {
+                toast.error(response.payload.message);
+                setIsEditing(true);
             }
         } catch (error) {
             console.log(error);
         } finally {
             setLoading(false);
         }
-
     };
 
     const handleSendVerificationLink = async (e: React.FormEvent<HTMLFormElement>) => {

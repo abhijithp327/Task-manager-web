@@ -6,6 +6,7 @@ import successAnimation from "@/public/lottie/success.json";
 import { useRouter } from "next/navigation";
 
 const VerificationSuccess = () => {
+  
   const router = useRouter();
 
   return (
