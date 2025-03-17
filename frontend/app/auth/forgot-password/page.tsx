@@ -5,6 +5,8 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../store/store';
 import LoadingButton from '@/app/components/buttons/Loadingbutton';
+import { forgotPassword } from '@/app/store/features/authSlice';
+import toast from 'react-hot-toast';
 
 
 interface FormData {
@@ -51,13 +53,18 @@ const ForgotPassword = () => {
         return Object.keys(errors).length === 0; // Return true if there are no errors
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!validateForm()) return;
         setLoading(true);
         try {
-            dispatch(forgotPassword(formData));
-            navigate.push("/auth/verify");
+            const response = await dispatch(forgotPassword(formData));
+            if (response.payload.success) {
+                toast.success(response.payload.message);
+                navigate.push('/auth/login');
+            } else {
+                toast.error(response.payload.message);
+            }
         } catch (error) {
             console.log(error);
         }
@@ -79,7 +86,7 @@ const ForgotPassword = () => {
                             </p>
                         </div>
 
-                        <form className="flex flex-col gap-3">
+                        <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
 
                             {/* Email */}
                             <div className="flex flex-col gap-1">
@@ -102,14 +109,12 @@ const ForgotPassword = () => {
                             {/* Button */}
                             <LoadingButton
                                 loading={loading}
-                                text="Update Email"
+                                text="Send Reset Link"
                                 loadingText="Sending Link..."
                                 type="submit"
                             />
 
                         </form>
-
-
 
                     </div>
 
