@@ -43,7 +43,12 @@ const initialState = {
     // logout
     isUserLoggingOut: false,
     isUserLoggedOut: false,
-    isUserLogoutError: false
+    isUserLogoutError: false,
+
+    // forgot password
+    isUserSendingForgotPasswordLink: false,
+    isUserSentForgotPasswordLink: false,
+    isUserSendForgotPasswordLinkError: false
 
 
 };
@@ -116,6 +121,16 @@ export const logoutUser = createAsyncThunk('logoutUser', async (_, thunkAPI) => 
         return thunkAPI.fulfillWithValue(response.data);
     } catch (error: any) {
         console.log("Logout error:", error); // Log detailed error message
+        return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
+    }
+});
+
+export const forgotPassword = createAsyncThunk('forgotPassword', async (data: any, thunkAPI) => {
+    try {
+        const response = await auth.forgotPassword(data);
+        return thunkAPI.fulfillWithValue(response.data);
+    } catch (error: any) {
+        console.log("Forgot password error:", error); // Log detailed error message
         return thunkAPI.rejectWithValue(error.response ? error.response.data : error.message);
     }
 });
@@ -264,7 +279,25 @@ const authSlice = createSlice({
                 state.isUserLoggingOut = false;
                 state.isUserLoggedOut = false;
                 state.isUserLogoutError = true;
-            });
+            })
+
+            // forgot password
+
+            .addCase(forgotPassword.pending, (state) => {
+                state.isUserSendingForgotPasswordLink = true;
+                state.isUserSentForgotPasswordLink = false;
+                state.isUserSendForgotPasswordLinkError = false;
+            })
+            .addCase(forgotPassword.fulfilled, (state) => {
+                state.isUserSendingForgotPasswordLink = false;
+                state.isUserSentForgotPasswordLink = true;
+                state.isUserSendForgotPasswordLinkError = false;
+            })
+            .addCase(forgotPassword.rejected, (state) => {
+                state.isUserSendingForgotPasswordLink = false;
+                state.isUserSentForgotPasswordLink = false;
+                state.isUserSendForgotPasswordLinkError = true;
+            })
     },
 });
 
