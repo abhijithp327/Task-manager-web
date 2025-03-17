@@ -11,7 +11,6 @@ const page = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.auth.user);
-  console.log('user checking : ', user);
 
   const handleLogout = async () => {
     try {
