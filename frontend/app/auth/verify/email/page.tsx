@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/app/store/store";
 import { verifyEmail } from "@/app/store/features/authSlice";
-import LoadingSpinner from "@/app/components/LoadingSpinner";
+import LoadingSpinner from "@/app/components/spinner/LoadingSpinner";
 import dynamic from "next/dynamic";
 import successAnimation from "@/public/lottie/success.json";
 import errorAnimation from "@/public/lottie/error.json";

@@ -12,28 +12,31 @@ const page = () => {
   const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const handleLogout = async () => {
-    try {
-      await dispatch(logoutUser());
-    } catch (error) {
-      console.log(error);
-    }
-    router.push('/auth/login');
-  };
+  // const handleLogout = async () => {
+  //   try {
+  //     await dispatch(logoutUser());
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  //   router.push('/auth/login');
+  // };
 
-  React.useEffect(() => {
-    if (user) {
-      router.push('/dashboard');
-    } else {
-      handleLogout();
-    }
-  }, [user]);
+  // React.useEffect(() => {
+  //   if (user) {
+  //     router.push('/dashboard');
+  //   } else {
+  //     handleLogout();
+  //   }
+  // }, [user]);
 
   return (
-    <div className=''>
-      hello world
-      <button onClick={handleLogout}>Logout</button>
-    </div>
+
+    <>
+    </>
+    // <div className=''>
+    //   hello world
+    //   <button onClick={handleLogout}>Logout</button>
+    // </div>
   );
 }
 

@@ -27,9 +27,9 @@ const Dashboard = () => {
 
     return (
         <section>
-            <h1>Dashboard</h1>
+            {/* <h1>Dashboard</h1>
 
-            <button onClick={handleLogout}>Logout</button>
+            <button onClick={handleLogout}>Logout</button> */}
         </section>
     );
 };
