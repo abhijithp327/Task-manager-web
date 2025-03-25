@@ -13,6 +13,7 @@ interface User {
 const Header = () => {
 
   const user = useSelector((state: RootState) => state.auth.user) as User | null;
+  console.log('user: ', user);
 
 
 
